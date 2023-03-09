@@ -1,0 +1,40 @@
+                ^
+sqlda=# create temp view top_cities as (
+sqlda(# select city, count(*) as number_of_customers
+sqlda(# from customers
+sqlda(# where city is not null
+sqlda(# group by city
+sqlda(# order by 2 desc
+sqlda(# limit 10);
+CREATE VIEW
+sqlda=#
+sqlda=# selct * from top_cities;
+ERROR:  syntax error at or near "selct"
+LINE 1: selct * from top_cities;
+        ^
+sqlda=# select * from top_cities;
+     city      | number_of_customers
+---------------+---------------------
+ Washington    |                1447
+ Houston       |                 904
+ New York City |                 731
+ El Paso       |                 713
+ Dallas        |                 607
+ Atlanta       |                 571
+ Sacramento    |                 506
+ Los Angeles   |                 466
+ San Antonio   |                 426
+ Miami         |                 426
+(10 rows)
+
+
+
+
+sqlda=# \copy top_cities to 'E:\SQL_for_data_analytics\chapter06\top_cities.csv' with csv header delimiter ',';
+ERROR:  cannot copy from view "top_cities"
+HINT:  Try the COPY (SELECT ...) TO variant.
+sqlda=# \copy (select * from top_cities) to 'E:\SQL_for_data_analytics\chapter06\top_cities.csv' with csv header delimiter ',';
+COPY 10
+sqlda=# drop view top_cities;
+DROP VIEW
+sqlda=#
