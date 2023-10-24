@@ -7,7 +7,7 @@ select * from salespeople;
 
  ### Lesson 2 
  ### Excercise 06 
-** The sales manager would like a couple of different lists of salespeople. 
+**The sales manager would like a couple of different lists of salespeople. 
 First, create a list of the online usernames of the first 10 female salespeople hired, 
 ordered from the first hired to the latest hired.
 **
