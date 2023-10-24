@@ -16,6 +16,7 @@ where gender='Female'
 order by hire_date asc
 limit 10;
 
+
  ## Activity 03 
 **
 Open your favorite SQL client and connect to the sqlda database. Examine the schema for the customers table
