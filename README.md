@@ -7,7 +7,7 @@ select * from salespeople;
 
  ### Lesson 2 
  ### Excercise 06 
-**  The sales manager would like a couple of different lists of salespeople. 
+** The sales manager would like a couple of different lists of salespeople. 
 First, create a list of the online usernames of the first 10 female salespeople hired, 
 ordered from the first hired to the latest hired.
 **
@@ -29,7 +29,7 @@ order by email;
 
 **Write a query that pulls all the first names, last names and email 
 details for ZoomZoom customers in New York City in the state of New York. 
-They should be ordered alphabetically by the last name followed by the first name. **
+They should be ordered alphabetically by the last name followed by the first name.**
 select first_name, last_name, email from customers
 where (state='NY' and city='New York City')
 order by last_name,first_name;
@@ -102,5 +102,5 @@ set event = 'thank-you party'
 
 **You've told the manager that you've completed these steps. 
 He tells the marketing operations team, who then uses the data to launch a marketing campaign. 
-The marketing manager thanks you and then asks you to delete the customers_nyc table. **
+The marketing manager thanks you and then asks you to delete the customers_nyc table.**
 drop table customers_nyc;
