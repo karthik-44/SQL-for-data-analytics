@@ -1,6 +1,8 @@
 # SQL-for-data-analytics
 
-Practice SQL using the text book SQL for data analytics.
+Practice SQL using the text book SQL for data analytics. There are several excercises, activities along the chapters of the textbook.  
+Install the postgres database software, pgadmin software on your local machine. Once installed, configure the schemas and users as needed and follow the text book to get some handson practice on SQL. One get exposure from a range of SQL commands from basic DML/CRUD statements to advanced window functions and many more.  
+
 # Chapter 02  
 ```sql
 select * from salespeople;
@@ -336,7 +338,7 @@ from target_30
 where sales_transaction_date::DATE > '2018-12-31';
 ```
 
- ## Activity07  
+ ## Activity 07  
  **Sales team want to see how the company has performed overall, as well as how individual dealerships have performed within the company.
 Calculate the total sales amount by day for all of the days in the year 2018 (that is, before the date January 1, 2019).**
 ```sql
