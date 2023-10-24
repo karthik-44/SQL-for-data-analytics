@@ -4,7 +4,6 @@ Practice SQL using the text book SQL for data analytics.
 # Chapter 02  
 select * from salespeople;
 
-
  ### Lesson 2 
  ### Excercise 06 
 **The sales manager would like a couple of different lists of salespeople. 
