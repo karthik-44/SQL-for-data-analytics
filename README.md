@@ -558,7 +558,7 @@ data = pd.read_sql_query("""select * FROM public_transportation_by_zip
                          where public_transportation_pct > 0 AND public_transportation_pct < 50""", engine)
 data.plot.hist(y='public_transportation_pct')
 ```
-![alt text](./chapter06/images/public_transportation.png)  
+![alt text](./chapter06/images/public_transport.png)  
 
 
 **Using pandas, test using the to_sql function with and without the method=psql_insert_copy parameter. How do the speeds compare? (Hint: In a Jupyter notebook, you can add %time in front of your command to see how long it takes.)**
