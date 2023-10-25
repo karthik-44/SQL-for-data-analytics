@@ -386,4 +386,218 @@ with all_dealerships as (
 select dealership_id, sales_amount_d,  ntile(10) over (order by sales_amount_d) as decile
 from all_dealerships;
 ```
-  
+
+# Chapter 06  
+**Accessing database from python interface:** 
+
+```python
+import psycopg2
+
+conn = psycopg2.connect(
+    host = 'localhost',
+    dbname = 'sqlda',
+    port = 5432,
+    user = 'postgres',
+    password = 'postgres'
+)
+
+cur = conn.cursor()
+
+cur.execute("select * from customers limit 10;")
+
+
+result = cur.fetchall()
+
+cur.close()
+conn.close()
+```
+**SQL Alchemy engine object has advantages such as :**
+
+- Connection pool allows for multiple connections simulataneously.
+- Lazy initialization (connection is established based on the request). 
+- This minimizes the connection time and reduces the load on the database.
+- It autocommits to the database.
+
+```python
+import pandas as pd
+from sqlalchemy import create_engine
+%matplotlib inline
+```
+
+```python
+conn_string =  ("postgresql+psycopg2://{username}:{pswd}@{host}:{port}/{database}")
+print(conn_string)
+
+engine = create_engine(conn_string.format(
+    username = 'postgres',
+    pswd = 'postgres',
+    host = 'localhost',
+    port = 5432,
+    database = 'sqlda'
+                        )
+                          )
+```
+```python
+engine.execute("SELECT * FROM customers LIMIT 10;").fetchall()
+
+df_customers = pd.read_sql_table('customers',engine)
+
+```
+### Exercise 21: 
+**Reading Data and Visualizing Data in Python**  
+
+```python
+query = """select city, count() as number_of_customers, count(nullif(gender,'M')) as female_count,
+           count(nullif(gender, 'F')) as male_count
+           from customers
+           group by city
+           order by number_of_customers desc
+           limit 10;
+"""
+
+top10_cities = pd.read_sql_query(query, engine)
+
+top10_cities.plot.bar(x='city',y=['male_count','female_count'], title='Customers by Gender Across Top 10 Cities')
+```
+![alt text](./chapter06/images/customer_distribution.png)  
+
+
+**Writing Data to the Database Using Python**
+```python
+top10_cities.to_sql('top10_cities', engine, index=False, if_exists='replace')
+```
+
+## Activity 8: 
+**Using an External Dataset to Discover Sales Trends**
+
+```python
+public_transport = pd.read_csv('../public_transportation_statistics_by_zip_code.csv', dtype={'zip_code':str})
+public_transport.head()
+```
+
+
+| zip_code | public_transportation_pct | public_transportation_population |
+|----------|---------------------------|--------------------------------|
+| 01379    | 3.3                       | 13                             |
+| 01440    | 0.4                       | 34                             |
+| 01505    | 0.9                       | 23                             |
+| 01524    | 0.5                       | 20                             |
+| 01529    | 1.8                       | 32                             |
+
+
+
+**Improving the speed for the copy of the data**
+```python
+import csv
+from io import StringIO
+def psql_insert_copy(table, conn, keys, data_iter):
+    # gets a DBAPI connection that can provide a cursor
+    dbapi_conn = conn.connection
+    with dbapi_conn.cursor() as cur:
+        s_buf = StringIO()
+        writer = csv.writer(s_buf)
+        writer.writerows(data_iter)
+        s_buf.seek(0)
+        columns = ', '.join('"{}"'.format(k) for k in keys)
+        if table.schema:
+            table_name = '{}.{}'.format(table.schema, table.name)
+        else:
+            table_name = table.name
+        sql = 'COPY {} ({}) FROM STDIN WITH CSV'.format(
+            table_name, columns)
+        cur.copy_expert(sql=sql, file=s_buf)
+
+public_transport.to_sql('public_transportation_by_zip', engine, index=False, if_exists='replace', method=psql_insert_copy)
+```
+
+```python
+#after you have installed ipython-sql
+%load_ext sql
+```
+
+```python
+%sql postgresql://postgres:postgres@localhost:5432/sqlda
+```
+```python
+%%sql
+select max(public_transportation_pct) AS max_pct,
+                     min(public_transportation_pct) AS min_pct
+                     from public_transportation_by_zip;
+```
+
+| max_pct | min_pct       |
+|---------|--------------|
+| 100.0   | -666666666.0 |
+
+
+We need to exclude all zip codes where public_transportation_pct is less than 0 so that you exclude the missing data (denoted by -666666666).
+
+**Calculate the average sales amounts for customers that live in high public transportation regions (over 10%) as well as low public transportation usage (less than, or equal to, 10%).**
+
+
+```python
+%%sql
+select (public_transportation_pct > 10) as is_high_public_transport,
+count(s.customer_id) * 1.0 / count(distinct c.customer_id) as sales_per_customer
+from customers c inner join public_transportation_by_zip t
+on c.postal_code = t.zip_code
+left join sales s on s.customer_id = c.customer_id
+WHERE public_transportation_pct >= 0
+group by is_high_public_transport
+```
+
+is_high_public_transport	sales_per_customer
+False	0.71569054583929793988
+True	0.83159379407616361072
+
+**Read the data into pandas and plot a histogram of the distribution (hint: you can use my_data.plot.hist(y='public_transportation_pct') to plot a histogram if you read the data into a my_data pandas DataFrame).**
+
+
+```python
+data = pd.read_sql_query("""select * FROM public_transportation_by_zip 
+                         where public_transportation_pct > 0 AND public_transportation_pct < 50""", engine)
+data.plot.hist(y='public_transportation_pct')
+```
+![alt text](./chapter06/images/public_transportation.png)  
+
+
+**Using pandas, test using the to_sql function with and without the method=psql_insert_copy parameter. How do the speeds compare? (Hint: In a Jupyter notebook, you can add %time in front of your command to see how long it takes.)**
+
+```python
+%time public_transport.to_sql('public_transportation_by_zip', \
+                              engine, index=False, if_exists='replace', method=psql_insert_copy)
+```
+> Wall time: 162 ms
+
+```python
+%time public_transport.to_sql('public_transportation_by_zip', \
+                              engine, index=False, if_exists='replace')
+
+```
+> Wall time: 1.14 s
+
+Clearly we can see the difference in the execution times.  
+
+**Group customers based on their zip code public transportation usage, rounded to the nearest 10%, and look at the average number of transactions per customer. Export this data to Excel and create a scatterplot to better understand the relationship between public transportation usage and sales.**
+
+```python
+data = pd.read_sql_query(""" 
+    select 10 * round(public_transportation_pct/10) as public_transport,
+    count(s.customer_id) * 1.0 / count(distinct c.customer_id) as sales_per_customer
+    from customers c inner join public_transportation_by_zip t 
+    on t.zip_code = c.postal_code
+    left join sales s 
+    on s.customer_id = c.customer_id 
+    where public_transportation_pct >= 0
+    group by 1""", engine)
+
+data.to_csv('./sales_vs_public_transport_pct.csv', index=False)
+```
+**Scatter Plot**  
+
+![alt text](./chapter06/images/scatter.png)  
+
+
+**Based on this analysis, what recommendations would you have for the executive team at ZoomZoom when considering expansion opportunities?**
+
+We can see that there is a positive relationship between "geographies with public transportation" and "the demand for electric vehicles". This makes sense, because electric vehicles could be an alternative option to public for transport to get around cities. So, we could recommend that ZoomZoom management should consider expanding in regions with high public transportation usage and in urban areas.
